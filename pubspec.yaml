@@ -1,0 +1,52 @@
+name: restaurant_menu_app
+description: "A new Flutter project."
+publish_to: 'none' 
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_bloc: ^9.1.1
+  iconly: ^1.0.1
+  hugeicons: ^1.1.5
+  equatable: ^2.0.8
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  intl: ^0.20.2
+  badges: ^3.1.2
+  excel:
+    path: packages/excel
+  path_provider: ^2.1.2
+  permission_handler: ^11.3.1
+  file_picker: ^8.1.6
+  share_plus: ^10.1.2
+  image_picker: ^1.0.7
+  flutter_image_compress: ^2.4.0
+  shared_preferences: ^2.5.3
+  flutter_localizations:
+    sdk: flutter
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+flutter:
+  uses-material-design: true
+  generate: true
+  
+  fonts:
+    - family: Gilroy
+      fonts:
+        - asset: fonts/Gilroy-Regular.ttf
+          weight: 400
+        - asset: fonts/Gilroy-Medium.ttf
+          weight: 500
+        - asset: fonts/Gilroy-SemiBold.ttf
+          weight: 600
+        - asset: fonts/Gilroy-Bold.ttf
+          weight: 700
+
+
