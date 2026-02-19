@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategory;
   final CategoryService _categoryService = CategoryService();
   Map<String, String> _categoryTranslations = {};
+  List<String> _orderedCategoryNames = []; // Category names in sortOrder
 
   @override
   void initState() {
@@ -38,14 +39,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final currentLocale = context.read<LanguageBloc>().state.locale;
     final languageCode = currentLocale.languageCode;
 
+    // Categories are already sorted by sortOrder from service
     final Map<String, String> translations = {};
+    final List<String> orderedNames = [];
+
     for (var category in categories) {
       translations[category.nameEn] = category.getName(languageCode);
+      orderedNames.add(category.nameEn);
     }
 
     if (mounted) {
       setState(() {
         _categoryTranslations = translations;
+        _orderedCategoryNames = orderedNames;
       });
     }
   }
@@ -56,11 +62,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LanguageBloc, LanguageState>(
-      listener: (context, state) {
-        // Reload categories when language changes
-        _loadCategories();
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<LanguageBloc, LanguageState>(
+          listener: (context, state) {
+            // Reload categories when language changes
+            _loadCategories();
+          },
+        ),
+        BlocListener<MenuBloc, MenuState>(
+          listener: (context, state) {
+            // Reload categories when menu is imported or loaded initially
+            if (state is MenuImportSuccess) {
+              print('🔄 Import detected, reloading categories...');
+              _loadCategories();
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<MenuBloc, MenuState>(
         builder: (context, state) {
           if (state is MenuLoading) {
@@ -87,7 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- Layouts ---
 
   Widget _buildTabletLayout(BuildContext context, MenuLoaded state) {
-    final categories = state.categorizedItems.keys.toList();
+    // Use ordered categories from service, filtered by available items
+    final categories = _orderedCategoryNames.where((cat) => state.categorizedItems.containsKey(cat)).toList();
     _selectedCategory ??= categories.isNotEmpty ? categories.first : null;
     final items = state.categorizedItems[_selectedCategory] ?? [];
 
@@ -111,12 +131,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onSelected: (Locale locale) {
               context.read<LanguageBloc>().add(ChangeLanguage(locale));
             },
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<Locale>>[
-                  const PopupMenuItem<Locale>(value: Locale('en', 'US'), child: Text('English')),
-                  const PopupMenuItem<Locale>(value: Locale('ru', 'RU'), child: Text('Русский')),
-                  const PopupMenuItem<Locale>(value: Locale('tk', 'TM'), child: Text('Türkmençe')),
-                ],
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
+              const PopupMenuItem<Locale>(value: Locale('en', 'US'), child: Text('English')),
+              const PopupMenuItem<Locale>(value: Locale('ru', 'RU'), child: Text('Русский')),
+              const PopupMenuItem<Locale>(value: Locale('tk', 'TM'), child: Text('Türkmençe')),
+            ],
           ),
         ],
         bottom: PreferredSize(
@@ -179,7 +198,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMobileLayout(BuildContext context, MenuLoaded state) {
-    final categories = state.categorizedItems.keys.toList();
+    // Use ordered categories from service, filtered by available items
+    final categories = _orderedCategoryNames.where((cat) => state.categorizedItems.containsKey(cat)).toList();
     _selectedCategory ??= categories.isNotEmpty ? categories.first : null;
     final items = state.categorizedItems[_selectedCategory] ?? [];
 
@@ -203,12 +223,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onSelected: (Locale locale) {
               context.read<LanguageBloc>().add(ChangeLanguage(locale));
             },
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<Locale>>[
-                  const PopupMenuItem<Locale>(value: Locale('en'), child: Text('English')),
-                  const PopupMenuItem<Locale>(value: Locale('tk'), child: Text('Türkmen')),
-                  const PopupMenuItem<Locale>(value: Locale('ru'), child: Text('Русский')),
-                ],
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
+              const PopupMenuItem<Locale>(value: Locale('en'), child: Text('English')),
+              const PopupMenuItem<Locale>(value: Locale('tk'), child: Text('Türkmen')),
+              const PopupMenuItem<Locale>(value: Locale('ru'), child: Text('Русский')),
+            ],
           ),
           SizedBox(width: 8),
         ],
@@ -242,20 +261,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: _buildCartFAB(context),
-      body:
-          items.isEmpty
-              ? _buildStatusView(
-                context: context,
-                icon: Icons.restaurant_menu,
-                title: AppLocalizations.of(context)!.translate('no_items'),
-                message: AppLocalizations.of(context)!.translate('no_items_msg'),
-              )
-              : GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, mainAxisSpacing: 20, crossAxisSpacing: 20, childAspectRatio: 0.7),
-                itemCount: items.length,
-                itemBuilder: (context, index) => MenuItemCard(item: items[index]),
-              ),
+      body: items.isEmpty
+          ? _buildStatusView(
+              context: context,
+              icon: Icons.restaurant_menu,
+              title: AppLocalizations.of(context)!.translate('no_items'),
+              message: AppLocalizations.of(context)!.translate('no_items_msg'),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, mainAxisSpacing: 20, crossAxisSpacing: 20, childAspectRatio: 0.7),
+              itemCount: items.length,
+              itemBuilder: (context, index) => MenuItemCard(item: items[index]),
+            ),
     );
   }
 

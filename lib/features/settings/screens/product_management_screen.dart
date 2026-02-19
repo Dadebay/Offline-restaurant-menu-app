@@ -58,7 +58,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductScreen())).then((_) => context.read<MenuBloc>().add(LoadMenu()));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductScreen()));
+              // No need to reload - bloc will update state automatically
             },
           ),
         ],
@@ -78,16 +79,15 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     hintText: AppLocalizations.of(context)!.translate('search_products'),
                     hintStyle: const TextStyle(fontFamily: 'Gilroy', color: Colors.grey),
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon:
-                        _searchController.text.isNotEmpty
-                            ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {});
-                              },
-                            )
-                            : null,
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
                     filled: true,
                     fillColor: Colors.grey[900],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -219,7 +219,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.blue),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(itemToEdit: item))).then((_) => context.read<MenuBloc>().add(LoadMenu()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(itemToEdit: item)));
+                    // No need to reload - bloc will update state automatically
                   },
                 ),
 
@@ -279,24 +280,23 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     final currentLang = context.read<LanguageBloc>().state.locale.languageCode;
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: Text(AppLocalizations.of(context)!.translate('delete_product')),
-            content: Text('${AppLocalizations.of(context)!.translate('delete_confirm')} "${item.getName(currentLang)}"?', style: const TextStyle(fontFamily: 'Gilroy')),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocalizations.of(context)!.translate('cancel'))),
-              TextButton(
-                onPressed: () {
-                  context.read<MenuBloc>().add(DeleteMenuItem(item.id));
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.translate('product_deleted'), style: const TextStyle(fontFamily: 'Gilroy')), backgroundColor: Colors.green));
-                },
-                child: Text(AppLocalizations.of(context)!.translate('delete'), style: const TextStyle(color: Colors.red)),
-              ),
-            ],
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.translate('delete_product')),
+        content: Text('${AppLocalizations.of(context)!.translate('delete_confirm')} "${item.getName(currentLang)}"?', style: const TextStyle(fontFamily: 'Gilroy')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocalizations.of(context)!.translate('cancel'))),
+          TextButton(
+            onPressed: () {
+              context.read<MenuBloc>().add(DeleteMenuItem(item.id));
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.translate('product_deleted'), style: const TextStyle(fontFamily: 'Gilroy')), backgroundColor: Colors.green));
+            },
+            child: Text(AppLocalizations.of(context)!.translate('delete'), style: const TextStyle(color: Colors.red)),
           ),
+        ],
+      ),
     );
   }
 }

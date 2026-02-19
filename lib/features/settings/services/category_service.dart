@@ -16,7 +16,10 @@ class CategoryService {
 
     try {
       final List<dynamic> decoded = json.decode(categoriesJson);
-      return decoded.map((json) => Category.fromJson(json)).toList();
+      final categories = decoded.map((json) => Category.fromJson(json)).toList();
+      // Sort by sortOrder
+      categories.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return categories;
     } catch (e) {
       return [];
     }
@@ -29,7 +32,7 @@ class CategoryService {
   }
 
   /// Add a new category
-  Future<bool> addCategory({required String nameEn, required String nameRu, required String nameTk}) async {
+  Future<bool> addCategory({required String nameEn, required String nameRu, required String nameTk, int? sortOrder}) async {
     if (nameEn.trim().isEmpty || nameRu.trim().isEmpty || nameTk.trim().isEmpty) {
       return false;
     }
@@ -41,14 +44,17 @@ class CategoryService {
       return false;
     }
 
-    final newCategory = Category(id: DateTime.now().millisecondsSinceEpoch.toString(), nameEn: nameEn.trim(), nameRu: nameRu.trim(), nameTk: nameTk.trim());
+    // Auto-assign sortOrder if not provided (put at the end)
+    final order = sortOrder ?? (categories.isEmpty ? 0 : categories.map((c) => c.sortOrder).reduce((a, b) => a > b ? a : b) + 1);
+
+    final newCategory = Category(id: DateTime.now().millisecondsSinceEpoch.toString(), nameEn: nameEn.trim(), nameRu: nameRu.trim(), nameTk: nameTk.trim(), sortOrder: order);
 
     categories.add(newCategory);
     return await _saveCategories(categories);
   }
 
   /// Update category
-  Future<bool> updateCategory({required String id, required String nameEn, required String nameRu, required String nameTk}) async {
+  Future<bool> updateCategory({required String id, required String nameEn, required String nameRu, required String nameTk, int? sortOrder}) async {
     if (nameEn.trim().isEmpty || nameRu.trim().isEmpty || nameTk.trim().isEmpty) {
       return false;
     }
@@ -58,7 +64,7 @@ class CategoryService {
 
     if (index == -1) return false;
 
-    categories[index] = Category(id: id, nameEn: nameEn.trim(), nameRu: nameRu.trim(), nameTk: nameTk.trim());
+    categories[index] = Category(id: id, nameEn: nameEn.trim(), nameRu: nameRu.trim(), nameTk: nameTk.trim(), sortOrder: sortOrder ?? categories[index].sortOrder);
 
     return await _saveCategories(categories);
   }
@@ -96,5 +102,14 @@ class CategoryService {
   Future<bool> clearCategories() async {
     final prefs = await SharedPreferences.getInstance();
     return await prefs.remove(_categoriesKey);
+  }
+
+  /// Reorder categories
+  Future<bool> reorderCategories(List<Category> reorderedCategories) async {
+    // Update sortOrder based on list position
+    for (int i = 0; i < reorderedCategories.length; i++) {
+      reorderedCategories[i] = reorderedCategories[i].copyWith(sortOrder: i);
+    }
+    return await _saveCategories(reorderedCategories);
   }
 }

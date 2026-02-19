@@ -45,9 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }
           });
         } else if (state is MenuImportSuccess) {
-          // Import categories
-          _categoryService.importCategories(state.categories.cast());
-
+          // Categories are already saved in MenuBloc during import
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -110,21 +108,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () {
                 showDialog(
                   context: context,
-                  builder:
-                      (dialogContext) => AlertDialog(
-                        title: Text(AppLocalizations.of(context)!.translate('import_excel')),
-                        content: Text(AppLocalizations.of(context)!.translate('import_warning'), style: const TextStyle(fontFamily: 'Gilroy')),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocalizations.of(context)!.translate('cancel'))),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(dialogContext);
-                              context.read<MenuBloc>().add(const ImportFromExcel());
-                            },
-                            child: Text(AppLocalizations.of(context)!.translate('import'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text(AppLocalizations.of(context)!.translate('import_excel')),
+                    content: Text(AppLocalizations.of(context)!.translate('import_warning'), style: const TextStyle(fontFamily: 'Gilroy')),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocalizations.of(context)!.translate('cancel'))),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          context.read<MenuBloc>().add(const ImportFromExcel());
+                        },
+                        child: Text(AppLocalizations.of(context)!.translate('import'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                       ),
+                    ],
+                  ),
                 );
               },
               color: Colors.green,

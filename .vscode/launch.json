@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            "name": "Offiline-restaurant-menu-app",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "Offiline-restaurant-menu-app (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "Offiline-restaurant-menu-app (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "excel",
+            "cwd": "packages/excel",
+            "request": "launch",
+            "type": "dart"
+        }
+    ]
+}

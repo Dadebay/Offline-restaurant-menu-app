@@ -1,13 +1,19 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:restaurant_menu_app/features/menu/models/menu_item.dart';
 import 'package:restaurant_menu_app/features/menu/services/excel_service.dart';
+import 'package:restaurant_menu_app/features/settings/services/category_service.dart';
+import 'package:restaurant_menu_app/features/settings/models/category.dart';
 import 'menu_event.dart';
 import 'menu_state.dart';
 
 class MenuBloc extends Bloc<MenuEvent, MenuState> {
   final ExcelService _excelService;
+  final CategoryService _categoryService;
 
-  MenuBloc({ExcelService? excelService}) : _excelService = excelService ?? ExcelService(), super(MenuInitial()) {
+  MenuBloc({ExcelService? excelService, CategoryService? categoryService})
+      : _excelService = excelService ?? ExcelService(),
+        _categoryService = categoryService ?? CategoryService(),
+        super(MenuInitial()) {
     on<LoadMenu>(_onLoadMenu);
     on<FilterMenuByCategory>(_onFilterByCategory);
     on<AddMenuItem>(_onAddMenuItem);
@@ -21,16 +27,21 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   final List<MenuItem> _currentItems = [];
 
   Future<void> _onLoadMenu(LoadMenu event, Emitter<MenuState> emit) async {
+    print('🔄 LoadMenu EVENT - Before load, _currentItems count: ${_currentItems.length}');
     emit(MenuLoading());
     try {
       // Step 1: Load from Excel
       final items = await _excelService.loadMenuFromExcel();
+      print('📥 Loaded ${items.length} items from Excel');
+      print('📋 Item IDs from Excel: ${items.map((e) => e.id).take(5).toList()}...');
 
       _currentItems.clear();
       _currentItems.addAll(items);
+      print('✅ _currentItems updated. New count: ${_currentItems.length}');
 
       _emitLoaded(emit, List.from(_currentItems));
     } catch (e) {
+      print('❌ LoadMenu ERROR: $e');
       emit(MenuError('Failed to load menu: $e'));
     }
   }
@@ -42,34 +53,52 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   }
 
   Future<void> _onAddMenuItem(AddMenuItem event, Emitter<MenuState> emit) async {
+    print('➕ AddMenuItem EVENT - Item ID: ${event.item.id}, Category: ${event.item.category}');
+    print('📊 Before add, _currentItems count: ${_currentItems.length}');
     try {
       // Step 1: Save to Excel file first
       await _excelService.addMenuItem(event.item);
+      print('✅ Item added to Excel');
 
       // Step 2: Update in-memory list
       _currentItems.add(event.item);
+      print('✅ Item added to _currentItems. New count: ${_currentItems.length}');
 
       // Step 3: Update UI state
       _emitLoaded(emit, List.from(_currentItems));
     } catch (e) {
+      print('❌ AddMenuItem ERROR: $e');
       emit(MenuError('Failed to add item: $e'));
     }
   }
 
   Future<void> _onUpdateMenuItem(UpdateMenuItem event, Emitter<MenuState> emit) async {
+    print('✏️ UpdateMenuItem EVENT - Item ID: ${event.item.id}, New Category: ${event.item.category}');
+    print('📊 Before update, _currentItems count: ${_currentItems.length}');
+    print('🔍 Searching for item with ID: ${event.item.id}');
     try {
       // Step 1: Update in-memory list
       final index = _currentItems.indexWhere((item) => item.id == event.item.id);
+      print('📍 Found item at index: $index');
       if (index != -1) {
+        print('🔄 Updating item at index $index');
+        print('   Old category: ${_currentItems[index].category}');
+        print('   New category: ${event.item.category}');
         _currentItems[index] = event.item;
+      } else {
+        print('⚠️ Item with ID ${event.item.id} NOT FOUND in _currentItems!');
+        print('   Available IDs: ${_currentItems.map((e) => e.id).toList()}');
       }
 
       // Step 2: Save all items to Excel
+      print('💾 Saving ${_currentItems.length} items to Excel...');
       await _excelService.saveAllMenuItems(_currentItems);
+      print('✅ All items saved to Excel');
 
       // Step 3: Update UI state
       _emitLoaded(emit, List.from(_currentItems));
     } catch (e) {
+      print('❌ UpdateMenuItem ERROR: $e');
       emit(MenuError('Failed to update item: $e'));
     }
   }
@@ -112,21 +141,33 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   }
 
   Future<void> _onImportFromExcel(ImportFromExcel event, Emitter<MenuState> emit) async {
+    print('📥 ImportFromExcel EVENT started');
     try {
       emit(MenuLoading());
 
       final data = await _excelService.importFromExcel();
 
       if (data == null) {
+        print('⚠️ Import cancelled or no data');
         emit(MenuError('Import cancelled or failed'));
         return;
       }
 
       final items = data['items'] as List<MenuItem>;
-      final categories = data['categories'] as List;
+      final categories = (data['categories'] as List).cast<Category>();
+      print('📊 Imported ${items.length} items and ${categories.length} categories');
+
+      // Save imported categories to SharedPreferences
+      if (categories.isNotEmpty) {
+        print('💾 Saving ${categories.length} categories...');
+        await _categoryService.importCategories(categories);
+        print('✅ Categories saved successfully');
+      }
 
       // Save imported items to local Excel
+      print('💾 Saving ${items.length} items to Excel...');
       await _excelService.saveAllMenuItems(items);
+      print('✅ Items saved successfully');
 
       // Update in-memory list
       _currentItems.clear();
@@ -137,7 +178,9 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
 
       // Then emit loaded state
       _emitLoaded(emit, List.from(_currentItems));
+      print('✅ Import completed successfully');
     } catch (e) {
+      print('❌ Import ERROR: $e');
       emit(MenuError('Failed to import: $e'));
     }
   }
