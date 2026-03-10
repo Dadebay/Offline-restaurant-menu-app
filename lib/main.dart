@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:restaurant_menu_app/core/theme/app_theme.dart';
@@ -8,6 +10,9 @@ import 'package:restaurant_menu_app/features/menu/screens/home_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:restaurant_menu_app/core/localization/app_localizations.dart';
 import 'package:restaurant_menu_app/features/language/bloc/language_bloc.dart';
+import 'package:restaurant_menu_app/features/settings/bloc/background_cubit.dart';
+import 'package:restaurant_menu_app/features/settings/services/background_settings_service.dart';
+import 'package:restaurant_menu_app/global_safe_area_wrapper.dart';
 
 void main() {
   runApp(const RestaurantApp());
@@ -23,6 +28,7 @@ class RestaurantApp extends StatelessWidget {
         BlocProvider(create: (_) => MenuBloc()..add(LoadMenu())),
         BlocProvider(create: (_) => CartBloc()),
         BlocProvider(create: (_) => LanguageBloc()..add(LoadSavedLanguage())),
+        BlocProvider(create: (_) => BackgroundCubit(BackgroundSettingsService())..load()),
       ],
       child: BlocBuilder<LanguageBloc, LanguageState>(
         builder: (context, languageState) {
@@ -33,7 +39,6 @@ class RestaurantApp extends StatelessWidget {
             themeMode: ThemeMode.dark,
             locale: languageState.locale,
             supportedLocales: const [
-              Locale('en', ''),
               Locale('ru', ''),
               Locale('tk', ''),
             ],
@@ -44,6 +49,13 @@ class RestaurantApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            builder: (context, child) {
+              return GlobalSafeAreaWrapper(
+                top: false,
+                bottom: Platform.isIOS ? false : true,
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             home: const HomeScreen(),
           );
         },

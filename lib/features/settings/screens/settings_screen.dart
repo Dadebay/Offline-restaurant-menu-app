@@ -12,6 +12,7 @@ import 'package:restaurant_menu_app/features/menu/bloc/menu_state.dart';
 import 'package:restaurant_menu_app/features/cart/screens/order_history_screen.dart';
 import 'package:restaurant_menu_app/features/settings/services/category_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:restaurant_menu_app/features/settings/screens/background_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -83,6 +84,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: AppLocalizations.of(context)!.translate('manage_categories_desc'),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryManagementScreen()));
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Background Settings
+            _buildSettingCard(
+              icon: Icons.wallpaper,
+              title: AppLocalizations.of(context)!.translate('background_settings'),
+              subtitle: AppLocalizations.of(context)!.translate('background_settings_desc'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const BackgroundSettingsScreen()));
               },
             ),
             const SizedBox(height: 16),

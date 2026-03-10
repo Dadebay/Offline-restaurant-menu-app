@@ -233,12 +233,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   onChanged: (value) {
                     final updatedItem = MenuItem(
                       id: item.id,
-                      nameEn: item.nameEn,
                       nameRu: item.nameRu,
                       nameTk: item.nameTk,
-                      descriptionEn: item.descriptionEn,
-                      descriptionRu: item.descriptionRu,
-                      descriptionTk: item.descriptionTk,
                       price: item.price,
                       imageUrl: item.imageUrl,
                       category: item.category,

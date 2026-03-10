@@ -39,7 +39,7 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
       // Try to find matching category
       Category? matchingCategory;
       for (var cat in categories) {
-        if (cat.nameEn == widget.item.category || cat.nameRu == widget.item.category || cat.nameTk == widget.item.category) {
+        if (cat.nameRu == widget.item.category || cat.nameTk == widget.item.category) {
           matchingCategory = cat;
           break;
         }
@@ -167,13 +167,7 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
 
           const SizedBox(height: 20),
 
-          // Description
-          Expanded(
-            child: SingleChildScrollView(
-              child: Text(widget.item.getDescription(currentLang), style: TextStyle(fontFamily: 'Gilroy', color: Colors.white.withOpacity(0.85), fontSize: 16, height: 1.6)),
-            ),
-          ),
-
+          const Spacer(),
           const SizedBox(height: 20),
 
           // Price
@@ -196,33 +190,32 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed:
-                  widget.item.available
-                      ? () {
-                        context.read<CartBloc>().add(AddCartItem(widget.item));
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: theme.colorScheme.surface,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            content: Row(
-                              children: [
-                                Icon(Icons.check_circle, color: theme.colorScheme.primary),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    '${widget.item.getName(currentLang)} ${AppLocalizations.of(context)!.translate('item_added')}',
-                                    style: const TextStyle(fontFamily: 'Gilroy', color: Colors.white, fontWeight: FontWeight.w600),
-                                  ),
+              onPressed: widget.item.available
+                  ? () {
+                      context.read<CartBloc>().add(AddCartItem(widget.item));
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: theme.colorScheme.surface,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          content: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: theme.colorScheme.primary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  '${widget.item.getName(currentLang)} ${AppLocalizations.of(context)!.translate('item_added')}',
+                                  style: const TextStyle(fontFamily: 'Gilroy', color: Colors.white, fontWeight: FontWeight.w600),
                                 ),
-                              ],
-                            ),
-                            action: SnackBarAction(label: AppLocalizations.of(context)!.translate('undo'), textColor: theme.colorScheme.primary, onPressed: () {}),
+                              ),
+                            ],
                           ),
-                        );
-                      }
-                      : null,
+                          action: SnackBarAction(label: AppLocalizations.of(context)!.translate('undo'), textColor: theme.colorScheme.primary, onPressed: () {}),
+                        ),
+                      );
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.item.available ? theme.colorScheme.primary : Colors.grey,
                 foregroundColor: Colors.black,

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -13,6 +15,8 @@ import 'package:restaurant_menu_app/core/localization/app_localizations.dart';
 import 'package:restaurant_menu_app/features/language/bloc/language_bloc.dart';
 import 'package:restaurant_menu_app/features/settings/screens/login_screen.dart';
 import 'package:restaurant_menu_app/features/settings/services/category_service.dart';
+import 'package:restaurant_menu_app/features/settings/bloc/background_cubit.dart';
+import 'package:restaurant_menu_app/features/settings/services/background_settings_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,9 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final Map<String, String> translations = {};
     final List<String> orderedNames = [];
 
-    for (var category in categories) {
-      translations[category.nameEn] = category.getName(languageCode);
-      orderedNames.add(category.nameEn);
+    for (final category in categories) {
+      translations[category.nameRu] = category.getName(languageCode);
+      orderedNames.add(category.nameRu);
     }
 
     if (mounted) {
@@ -56,8 +60,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _getTranslatedCategory(String categoryEn) {
-    return _categoryTranslations[categoryEn] ?? categoryEn;
+  String _getTranslatedCategory(String categoryKey) {
+    return _categoryTranslations[categoryKey] ?? categoryKey;
+  }
+
+  Widget _buildBackground({required Widget child}) {
+    return BlocBuilder<BackgroundCubit, BackgroundSettings>(
+      builder: (context, background) {
+        DecorationImage? bgImage;
+        Color bgColor = Theme.of(context).scaffoldBackgroundColor;
+
+        if (background.type == BackgroundType.color && background.colorValue != null) {
+          bgColor = Color(background.colorValue!);
+        }
+
+        if (background.type == BackgroundType.image && background.imagePath != null) {
+          final file = File(background.imagePath!);
+          if (file.existsSync()) {
+            bgImage = DecorationImage(image: FileImage(file), fit: BoxFit.cover);
+          }
+        }
+
+        return Container(
+          decoration: BoxDecoration(color: bgColor, image: bgImage),
+          child: Container(
+            color: bgImage != null ? Colors.black.withOpacity(0.45) : null,
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -111,10 +143,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedCategory ??= categories.isNotEmpty ? categories.first : null;
     final items = state.categorizedItems[_selectedCategory] ?? [];
 
-    return Scaffold(
+    return _buildBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
@@ -132,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<LanguageBloc>().add(ChangeLanguage(locale));
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
-              const PopupMenuItem<Locale>(value: Locale('en', 'US'), child: Text('English')),
               const PopupMenuItem<Locale>(value: Locale('ru', 'RU'), child: Text('Русский')),
               const PopupMenuItem<Locale>(value: Locale('tk', 'TM'), child: Text('Türkmençe')),
             ],
@@ -143,6 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             height: 60,
             padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.15)),
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -168,33 +203,30 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: _buildCartFAB(context),
-      body: Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: CustomScrollView(
-          slivers: [
-            if (items.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _buildStatusView(
-                  context: context,
-                  icon: Icons.restaurant_menu,
-                  title: AppLocalizations.of(context)!.translate('no_items'),
-                  message: AppLocalizations.of(context)!.translate('no_items_msg'),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 32, crossAxisSpacing: 32, childAspectRatio: 0.7),
-                  delegate: SliverChildBuilderDelegate((context, index) => MenuItemCard(item: items[index]), childCount: items.length),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          if (items.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _buildStatusView(
+                context: context,
+                icon: Icons.restaurant_menu,
+                title: AppLocalizations.of(context)!.translate('no_items'),
+                message: AppLocalizations.of(context)!.translate('no_items_msg'),
               ),
-            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-          ],
-        ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 32, crossAxisSpacing: 32, childAspectRatio: 0.7),
+                delegate: SliverChildBuilderDelegate((context, index) => MenuItemCard(item: items[index]), childCount: items.length),
+              ),
+            ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+        ],
       ),
-    );
+    ));
   }
 
   Widget _buildMobileLayout(BuildContext context, MenuLoaded state) {
@@ -203,10 +235,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedCategory ??= categories.isNotEmpty ? categories.first : null;
     final items = state.categorizedItems[_selectedCategory] ?? [];
 
-    return Scaffold(
+    return _buildBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
@@ -224,7 +259,6 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<LanguageBloc>().add(ChangeLanguage(locale));
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
-              const PopupMenuItem<Locale>(value: Locale('en'), child: Text('English')),
               const PopupMenuItem<Locale>(value: Locale('tk'), child: Text('Türkmen')),
               const PopupMenuItem<Locale>(value: Locale('ru'), child: Text('Русский')),
             ],
@@ -236,6 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             height: 60,
             padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.15)),
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -274,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: items.length,
               itemBuilder: (context, index) => MenuItemCard(item: items[index]),
             ),
-    );
+    ));
   }
 
   // --- Components ---

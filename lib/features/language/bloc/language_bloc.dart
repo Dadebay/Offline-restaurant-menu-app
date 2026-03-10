@@ -37,7 +37,7 @@ class LanguageState extends Equatable {
 class LanguageBloc extends Bloc<LanguageEvent, LanguageState> {
   static const String _languageKey = 'selected_language';
 
-  LanguageBloc() : super(const LanguageState(Locale('en'))) {
+  LanguageBloc() : super(const LanguageState(Locale('ru'))) {
     on<LoadSavedLanguage>(_onLoadSavedLanguage);
     on<ChangeLanguage>(_onChangeLanguage);
   }
@@ -48,8 +48,8 @@ class LanguageBloc extends Bloc<LanguageEvent, LanguageState> {
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final languageCode = prefs.getString(_languageKey);
-    if (languageCode != null) {
-      emit(LanguageState(Locale(languageCode)));
+    if (languageCode == 'ru' || languageCode == 'tk') {
+      emit(LanguageState(Locale(languageCode!)));
     }
   }
 

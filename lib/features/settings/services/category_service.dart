@@ -32,30 +32,30 @@ class CategoryService {
   }
 
   /// Add a new category
-  Future<bool> addCategory({required String nameEn, required String nameRu, required String nameTk, int? sortOrder}) async {
-    if (nameEn.trim().isEmpty || nameRu.trim().isEmpty || nameTk.trim().isEmpty) {
+  Future<bool> addCategory({required String nameRu, required String nameTk, int? sortOrder}) async {
+    if (nameRu.trim().isEmpty || nameTk.trim().isEmpty) {
       return false;
     }
 
     final categories = await getCategories();
 
-    // Check if category with same English name exists
-    if (categories.any((cat) => cat.nameEn.toLowerCase() == nameEn.trim().toLowerCase())) {
+    // Check if category with same Russian name exists
+    if (categories.any((cat) => cat.nameRu.toLowerCase() == nameRu.trim().toLowerCase())) {
       return false;
     }
 
     // Auto-assign sortOrder if not provided (put at the end)
     final order = sortOrder ?? (categories.isEmpty ? 0 : categories.map((c) => c.sortOrder).reduce((a, b) => a > b ? a : b) + 1);
 
-    final newCategory = Category(id: DateTime.now().millisecondsSinceEpoch.toString(), nameEn: nameEn.trim(), nameRu: nameRu.trim(), nameTk: nameTk.trim(), sortOrder: order);
+    final newCategory = Category(id: DateTime.now().millisecondsSinceEpoch.toString(), nameRu: nameRu.trim(), nameTk: nameTk.trim(), sortOrder: order);
 
     categories.add(newCategory);
     return await _saveCategories(categories);
   }
 
   /// Update category
-  Future<bool> updateCategory({required String id, required String nameEn, required String nameRu, required String nameTk, int? sortOrder}) async {
-    if (nameEn.trim().isEmpty || nameRu.trim().isEmpty || nameTk.trim().isEmpty) {
+  Future<bool> updateCategory({required String id, required String nameRu, required String nameTk, int? sortOrder}) async {
+    if (nameRu.trim().isEmpty || nameTk.trim().isEmpty) {
       return false;
     }
 
@@ -64,7 +64,7 @@ class CategoryService {
 
     if (index == -1) return false;
 
-    categories[index] = Category(id: id, nameEn: nameEn.trim(), nameRu: nameRu.trim(), nameTk: nameTk.trim(), sortOrder: sortOrder ?? categories[index].sortOrder);
+    categories[index] = Category(id: id, nameRu: nameRu.trim(), nameTk: nameTk.trim(), sortOrder: sortOrder ?? categories[index].sortOrder);
 
     return await _saveCategories(categories);
   }

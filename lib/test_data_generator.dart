@@ -10,22 +10,22 @@ Future<void> generateTestData() async {
 
   // Create 10 test categories
   final categories = [
-    {'en': 'Appetizers', 'ru': 'Закуски', 'tk': 'Täze tagamlar'},
-    {'en': 'Soups', 'ru': 'Супы', 'tk': 'Çorbalar'},
-    {'en': 'Salads', 'ru': 'Салаты', 'tk': 'Salatlar'},
-    {'en': 'Main Dishes', 'ru': 'Основные блюда', 'tk': 'Esasy tagamlar'},
-    {'en': 'Grilled', 'ru': 'Гриль', 'tk': 'Kebaplar'},
-    {'en': 'Desserts', 'ru': 'Десерты', 'tk': 'Süýji tagamlar'},
-    {'en': 'Beverages', 'ru': 'Напитки', 'tk': 'Içgiler'},
-    {'en': 'Pizza', 'ru': 'Пицца', 'tk': 'Pitsa'},
-    {'en': 'Pasta', 'ru': 'Паста', 'tk': 'Makaron'},
-    {'en': 'Sea Food', 'ru': 'Морепродукты', 'tk': 'Deňiz önümleri'},
+    {'ru': 'Закуски', 'tk': 'Täze tagamlar'},
+    {'ru': 'Супы', 'tk': 'Çorbalar'},
+    {'ru': 'Салаты', 'tk': 'Salatlar'},
+    {'ru': 'Основные блюда', 'tk': 'Esasy tagamlar'},
+    {'ru': 'Гриль', 'tk': 'Kebaplar'},
+    {'ru': 'Десерты', 'tk': 'Suyji tagamlar'},
+    {'ru': 'Напитки', 'tk': 'Icgiler'},
+    {'ru': 'Пицца', 'tk': 'Pitsa'},
+    {'ru': 'Паста', 'tk': 'Makaron'},
+    {'ru': 'Морепродукты', 'tk': 'Deniz onumleri'},
   ];
 
   print('📝 Creating categories...');
   for (var cat in categories) {
-    await categoryService.addCategory(nameEn: cat['en']!, nameRu: cat['ru']!, nameTk: cat['tk']!);
-    print('✅ Created category: ${cat['en']}');
+    await categoryService.addCategory(nameRu: cat['ru']!, nameTk: cat['tk']!);
+    print('✅ Created category: ${cat['ru']}');
   }
 
   print('\n📝 Creating products...');
@@ -33,18 +33,14 @@ Future<void> generateTestData() async {
 
   // For each category, create 10 products
   for (var i = 0; i < categories.length; i++) {
-    final categoryName = categories[i]['en']!;
+    final categoryName = categories[i]['ru']!;
 
     for (var j = 1; j <= 10; j++) {
       final item = MenuItem(
         id: DateTime.now().millisecondsSinceEpoch.toString() + '_' + i.toString() + '_' + j.toString(),
         category: categoryName,
-        nameEn: '$categoryName Item $j',
         nameRu: '${categories[i]['ru']} Блюдо $j',
         nameTk: '${categories[i]['tk']} $j',
-        descriptionEn: 'Delicious $categoryName item number $j with amazing taste',
-        descriptionRu: 'Вкусное блюдо ${categories[i]['ru']} номер $j с потрясающим вкусом',
-        descriptionTk: '${categories[i]['tk']} tagamy $j ajaýyp tagamly',
         price: (15 + (i * 5) + j).toDouble(),
         imageUrl: '', // Empty as requested
         available: true,
